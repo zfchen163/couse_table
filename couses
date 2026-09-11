@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>新闵学校一年级（5）班 - 课程助手</title>
+    <!-- 引入字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #eef2f6;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            
+            /* 男宝专属活力配色 */
+            --blue: #2563eb;
+            --blue-light: #dbeafe;
+            --orange: #f97316;
+            --orange-light: #ffedd5;
+            --green: #22c55e;
+            --green-light: #dcfce7;
+            --purple: #8b5cf6;
+            --purple-light: #ede9fe;
+            --yellow: #eab308;
+            --yellow-light: #fef08a;
+            
+            --shadow: 0 6px 0 rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+            --radius: 24px;
+            --border-width: 3px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Nunito', 'ZCOOL KuaiLe', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#cbd5e1 2px, transparent 2px), radial-gradient(#cbd5e1 2px, transparent 2px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            color: var(--text-main);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-bottom: 90px; /* 给小恐龙留出跑道 */
+        }
+
+        /* --- 动态小恐龙区域 --- */
+        .dino-container {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            pointer-events: none; 
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .dino-runner {
+            position: absolute;
+            bottom: 0;
+            width: 90px;
+            height: 90px;
+            animation: runAround 18s linear infinite;
+            transform-origin: bottom center;
+        }
+        .dino-sprite {
+            width: 100%;
+            height: 100%;
+            animation: bounce 0.3s infinite alternate ease-in-out;
+        }
+        @keyframes runAround {
+            0%   { left: -10%; transform: scaleX(1); }
+            15%  { left: calc(100% + 10px); transform: scaleX(1); }
+            30%  { left: calc(100% + 10px); transform: scaleX(1); }
+            45%  { left: calc(100% + 10px); transform: scaleX(-1); }
+            60%  { left: -10%; transform: scaleX(-1); }
+            75%  { left: -10%; transform: scaleX(-1); }
+            100% { left: -10%; transform: scaleX(1); }
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+
+        /* --- 顶部时间卡片 --- */
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: var(--border-width) solid var(--blue-light);
+            position: relative;
+        }
+        .header::before { content: '🚀'; position: absolute; top: -16px; left: 20px; font-size: 26px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+        .header::after { content: '⚡'; position: absolute; bottom: -16px; right: 20px; font-size: 26px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+        .header h1 { font-size: 1.3rem; color: var(--text-main); margin-bottom: 8px; font-weight: 900; }
+        .clock { font-size: 2.8rem; font-weight: 900; color: var(--blue); line-height: 1.2; font-family: 'Nunito', sans-serif; text-shadow: 2px 2px 0 var(--blue-light); }
+        .date { font-size: 0.95rem; color: var(--text-sub); font-weight: 800; margin-top: 6px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: var(--border-width) solid #fff;
+            transition: all 0.3s;
+        }
+
+        /* --- 当前状态卡片 --- */
+        .status-card { position: relative; overflow: hidden; }
+        .status-card.class-mode { border-color: var(--blue); background-color: #f0f7ff; }
+        .status-card.break-mode { border-color: var(--green); background-color: #f0fdf4; }
+        .status-card.after-school-mode { border-color: var(--orange); background-color: #fff7ed; }
+        
+        .status-label { font-size: 0.9rem; color: var(--text-sub); letter-spacing: 1px; margin-bottom: 8px; font-weight: 800; text-transform: uppercase; }
+        .status-course { font-size: 2.4rem; font-weight: 900; margin-bottom: 6px; line-height: 1.2; }
+        .status-card.class-mode .status-course { color: #1d4ed8; }
+        .status-card.break-mode .status-course { color: #15803d; }
+        .status-card.after-school-mode .status-course { color: #c2410c; }
+        
+        .teacher-name { font-size: 1.1rem; color: #6d28d9; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; background: var(--purple-light); padding: 4px 14px; border-radius: 20px; width: fit-content; border: 2px solid #c4b5fd; }
+
+        .status-time { font-size: 1.05rem; color: var(--text-main); font-weight: 800; margin-bottom: 16px; font-variant-numeric: tabular-nums; }
+
+        /* --- 进度条 --- */
+        .progress-container { height: 18px; background-color: #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 8px; border: 2px solid #cbd5e1; }
+        .progress-bar { height: 100%; width: 0%; border-radius: 8px; transition: width 1s linear; position: relative; }
+        .progress-bar.class-mode { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .progress-bar.break-mode { background: linear-gradient(90deg, #22c55e, #15803d); }
+        .progress-bar.after-school-mode { background: linear-gradient(90deg, #f97316, #c2410c); }
+        .progress-text { text-align: right; font-size: 0.95rem; color: var(--text-main); font-weight: 900; font-family: 'Nunito', sans-serif; }
+
+        /* --- 接送助手 --- */
+        .pick-up-title { font-size: 1.25rem; font-weight: 900; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #c2410c; }
+        .pick-up-info-box { background-color: var(--blue-light); border: 2px solid var(--blue); border-radius: 16px; padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
+        .pick-up-info-box .label { color: #1e3a8a; }
+        .pick-up-info-box .value { color: #1d4ed8; font-size: 1.2rem; font-weight: 900; }
+        
+        .pick-up-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 1.05rem; font-weight: 800; color: var(--text-main); }
+        input[type="number"] { padding: 10px 14px; border: 3px solid var(--blue-light); border-radius: 16px; font-size: 1.1rem; outline: none; background-color: #fff; font-family: inherit; width: 90px; text-align: center; font-weight: 900; color: var(--blue); transition: all 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        input[type="number"]:focus { border-color: var(--blue); transform: scale(1.05); }
+        
+        .pick-up-result { margin-top: 16px; padding: 18px; border-radius: 16px; font-size: 1.1rem; font-weight: 900; text-align: center; transition: all 0.3s; border: 3px solid; }
+        .pick-up-result.normal { background-color: var(--green-light); color: #065f46; border-color: var(--green); }
+        .pick-up-result.urgent { background-color: var(--orange-light); color: #9a3412; border-color: var(--orange); animation: pulse-urgent 1s infinite alternate; }
+        .pick-up-result.done { background-color: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+        @keyframes pulse-urgent { 0% { transform: translateY(0); } 100% { transform: translateY(-6px); } }
+
+        /* --- 周课表区域 --- */
+        .schedule-section { display: flex; flex-direction: column; gap: 12px; }
+        .schedule-header { display: flex; justify-content: space-between; align-items: center; }
+        .schedule-title { font-size: 1.25rem; font-weight: 900; color: #1d4ed8; display: flex; align-items: center; gap: 8px; }
+        
+        .week-table-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            background: #fff;
+            border: var(--border-width) solid var(--blue-light);
+            -webkit-overflow-scrolling: touch;
+        }
+        .week-table-wrapper::-webkit-scrollbar { height: 8px; }
+        .week-table-wrapper::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .week-table-wrapper::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 10px; }
+        
+        .week-table { width: 100%; border-collapse: collapse; min-width: 500px; text-align: center; font-size: 0.85rem; }
+        .week-table th, .week-table td { padding: 12px 6px; border-bottom: 2px solid #f1f5f9; border-right: 2px solid #f1f5f9; }
+        .week-table th { font-weight: 900; color: #334155; background-color: #f8fafc; font-size: 0.95rem; }
+        
+        .week-table .time-col { font-weight: 800; color: #475569; width: 110px; background-color: #f8fafc; font-size: 0.85rem; }
+        
+        .week-table td.active-col { background-color: var(--yellow-light); border-left: 3px solid var(--yellow); border-right: 3px solid var(--yellow); }
+        .week-table th.active-col { background-color: var(--yellow); color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.2); }
+        
+        .course-badge {
+            display: inline-block; padding: 6px 10px; border-radius: 12px; font-weight: 900; font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        .badge-chinese { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .badge-math { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+        .badge-english { background: #f3e8ff; color: #6d28d9; border: 1px solid #c4b5fd; }
+        .badge-sport { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .badge-other { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .badge-empty { color: transparent; }
+        
+        .teacher-tag-mini { display: block; font-size: 0.75rem; color: #475569; margin-top: 4px; font-weight: 800; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 顶部时间 -->
+    <div class="header">
+        <h1>新闵学校 一年级（5）班</h1>
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="date" id="date">--</div>
+    </div>
+
+    <!-- 当前状态 -->
+    <div class="card status-card" id="status-card">
+        <div class="status-label">当前状态</div>
+        <div class="status-course" id="current-course">加载中...</div>
+        <div class="teacher-name" id="current-teacher" style="display: none;"></div>
+        <div class="status-time" id="current-time-range">--</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0%</div>
+    </div>
+
+    <!-- 接送小助手 -->
+    <div class="card">
+        <div class="pick-up-title">🚀 接送小助手</div>
+        <div class="pick-up-info-box">
+            <span class="label">今日放学安排</span>
+            <span class="value" id="today-pickup-label">计算中...</span>
+        </div>
+        <div class="pick-up-row">
+            <span>提前出发(分钟)：</span>
+            <input type="number" id="advance-minutes" value="20" min="0" max="60">
+        </div>
+        <div class="pick-up-result normal" id="pick-up-result">计算中...</div>
+    </div>
+
+    <!-- 周一到周五课表 -->
+    <div class="card schedule-section">
+        <div class="schedule-header">
+            <div class="schedule-title">⚡ 周一到周五课表</div>
+            <span style="font-size:0.85rem; color:#64748b; font-weight:800;">左右滑动 &rarr;</span>
+        </div>
+        
+        <div class="week-table-wrapper">
+            <table class="week-table" id="week-table">
+                <!-- 动态生成 -->
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 动态小恐龙区域 -->
+<div class="dino-container">
+    <div class="dino-runner">
+        <div class="dino-sprite">
+            <!-- 活力蓝色小恐龙 SVG -->
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- 尾巴 -->
+                <path d="M 70 80 Q 95 85 85 60" stroke="#2563eb" stroke-width="12" stroke-linecap="round" fill="none">
+                    <animate attributeName="d" dur="0.4s" repeatCount="indefinite" values="M 70 80 Q 95 85 85 60;M 70 80 Q 95 85 80 65;M 70 80 Q 95 85 85 60" />
+                </path>
+                <!-- 背刺 -->
+                <path d="M 50 40 L 55 25 L 60 40 Z" fill="#f97316"/>
+                <path d="M 35 40 L 40 28 L 45 40 Z" fill="#f97316"/>
+                <!-- 身体 -->
+                <ellipse cx="45" cy="80" rx="28" ry="18" fill="#2563eb"/>
+                <!-- 肚皮 -->
+                <ellipse cx="40" cy="85" rx="16" ry="10" fill="#dbeafe"/>
+                <!-- 后腿 -->
+                <ellipse cx="60" cy="94" rx="10" ry="6" fill="#1d4ed8"/>
+                <!-- 前腿 -->
+                <ellipse cx="28" cy="94" rx="10" ry="6" fill="#1d4ed8"/>
+                <!-- 头部 -->
+                <circle cx="35" cy="50" r="26" fill="#2563eb"/>
+                <!-- 嘴巴 -->
+                <path d="M 15 58 Q 25 65 35 60" stroke="#1e293b" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <!-- 眼睛 -->
+                <circle cx="28" cy="45" r="4.5" fill="#1e293b"/>
+                <circle cx="44" cy="45" r="4.5" fill="#1e293b"/>
+                <!-- 眼睛高光 -->
+                <circle cx="29.5" cy="43.5" r="1.5" fill="#fff"/>
+                <circle cx="45.5" cy="43.5" r="1.5" fill="#fff"/>
+                <!-- 腮红 -->
+                <ellipse cx="20" cy="55" rx="5" ry="3" fill="#ff6b8b" opacity="0.8"/>
+                <ellipse cx="50" cy="55" rx="5" ry="3" fill="#ff6b8b" opacity="0.8"/>
+                <!-- 橙色小书包 -->
+                <rect x="65" y="65" width="18" height="16" rx="4" fill="#f97316"/>
+                <path d="M 65 70 L 60 60" stroke="#c2410c" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ================= 数据配置 =================
+    const teacherMap = { '语文': '魏老师', '数学': '李老师', '外语': '丁老师', '英语': '丁老师' };
+    
+    const subjectBadgeMap = {
+        '语文': 'badge-chinese',
+        '数学': 'badge-math',
+        '外语': 'badge-english',
+        '英语': 'badge-english',
+        '体育与健康': 'badge-sport',
+        '体育活动课': 'badge-sport'
+    };
+
+    const timeSlots = [
+        { id: 1, start: '8:20', end: '8:55', type: 'class', name: '第一节' },
+        { id: 2, start: '8:55', end: '9:30', type: 'break', name: '大课间活动' },
+        { id: 3, start: '9:30', end: '10:05', type: 'class', name: '第二节' },
+        { id: 4, start: '10:05', end: '10:20', type: 'break', name: '课间' },
+        { id: 5, start: '10:20', end: '11:00', type: 'class', name: '第三节(含眼保健操)' },
+        { id: 6, start: '11:00', end: '11:15', type: 'break', name: '课间' },
+        { id: 7, start: '11:15', end: '11:50', type: 'class', name: '第四节' },
+        { id: 8, start: '11:50', end: '13:00', type: 'break', name: '午餐午休' },
+        { id: 9, start: '13:00', end: '13:35', type: 'class', name: '第五节' },
+        { id: 10, start: '13:35', end: '13:50', type: 'break', name: '课间' },
+        { id: 11, start: '13:50', end: '14:30', type: 'class', name: '第六节(含眼保健操)' },
+        { id: 12, start: '14:30', end: '14:45', type: 'break', name: '课间' },
+        { id: 13, start: '14:45', end: '15:20', type: 'class', name: '第七节' }
+    ];
+
+    const courses = {
+        1: { 1: '数学', 3: '校本课程', 5: '语文', 7: '外语', 9: '唱游·音乐', 11: '体育与健康', 13: '自由活动' },
+        2: { 1: '语文', 3: '科学', 5: '语文', 7: '体育与健康', 9: '校本课程', 11: '道德与法治', 13: '自由活动' },
+        3: { 1: '语文', 3: '数学', 5: '造型·美术', 7: '科学', 9: '综合实践活动', 11: '体育与健康', 13: '自由活动' },
+        4: { 1: '外语', 3: '语文', 5: '语文', 7: '唱游·音乐', 9: '体育与健康', 11: '道德与法治', 13: '体育活动课' },
+        5: { 1: '语文', 3: '劳动', 5: '数学', 7: '造型·美术', 9: '语文', 11: '校本课程（体育与健康）', 13: '自由活动' }
+    };
+
+    // ================= 工具函数 =================
+    function timeStrToMinutes(timeStr) {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    }
+    function formatTime(date) { return date.toLocaleTimeString('zh-CN', { hour12: false }); }
+    function getTeacher(courseName) { return teacherMap[courseName] || ''; }
+    
+    function getCourseBadge(courseName) {
+        if (!courseName || courseName === '无') return '<span class="course-badge badge-empty">-</span>';
+        const badgeClass = subjectBadgeMap[courseName] || 'badge-other';
+        const teacher = getTeacher(courseName);
+        let teacherHtml = teacher ? `<span class="teacher-tag-mini">${teacher}</span>` : '';
+        return `<span class="course-badge ${badgeClass}">${courseName}${teacherHtml}</span>`;
+    }
+
+    function getTodayTimeline(day) {
+        let timeline = [...timeSlots];
+        if (day === 5) {
+            timeline = timeline.filter(slot => slot.id !== 13);
+            timeline.push({ id: 101, start: '14:40', end: '15:00', type: 'after-school', name: '课后服务一' });
+        } else if (day >= 1 && day <= 4) {
+            let afterSchoolName = day === 1 ? '课后服务一（象棋）' : '课后服务一';
+            timeline.push({ id: 101, start: '15:35', end: '16:10', type: 'after-school', name: afterSchoolName });
+        }
+        timeline.forEach(slot => {
+            if (slot.type === 'class') {
+                slot.courseName = courses[day] ? courses[day][slot.id] || '无' : '无';
+            }
+        });
+        return timeline.sort((a, b) => timeStrToMinutes(a.start) - timeStrToMinutes(b.start));
+    }
+
+    // ================= 渲染周课表 =================
+    function renderWeeklyTable() {
+        const table = document.getElementById('week-table');
+        const days = ['星期一', '星期二', '星期三', '星期四', '星期五'];
+        const today = new Date().getDay();
+
+        let html = '<thead><tr><th class="time-col">时间</th>';
+        days.forEach((day, index) => {
+            const isToday = (index + 1) === today;
+            html += `<th class="${isToday ? 'active-col' : ''}">${isToday ? '🌟 ' : ''}${day}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        timeSlots.forEach(slot => {
+            html += `<tr>`;
+            html += `<td class="time-col">${slot.start}-${slot.end}</td>`;
+            days.forEach((day, index) => {
+                const dayNum = index + 1;
+                const isToday = dayNum === today;
+                let cellContent = '-';
+                let cellClass = isToday ? 'active-col' : '';
+
+                if (slot.type === 'class') {
+                    const courseName = courses[dayNum] ? courses[dayNum][slot.id] : null;
+                    if (courseName) cellContent = getCourseBadge(courseName);
+                } else if (slot.type === 'break') {
+                    cellContent = '<span style="color:#94a3b8; font-size:0.85rem; font-weight:800;">休息</span>';
+                }
+                if (slot.id === 13 && dayNum === 5) {
+                    cellContent = '<span style="color:#94a3b8; font-size:0.85rem; font-weight:800;">放学</span>';
+                }
+                html += `<td class="${cellClass}">${cellContent}</td>`;
+            });
+            html += `</tr>`;
+        });
+        
+        html += `<tr><td class="time-col">课后服务</td>`;
+        days.forEach((day, index) => {
+            const dayNum = index + 1;
+            const isToday = dayNum === today;
+            let cellClass = isToday ? 'active-col' : '';
+            let content = dayNum === 1 ? '<span class="course-badge badge-other">象棋课</span>' : '<span class="course-badge badge-other">服务一</span>';
+            html += `<td class="${cellClass}">${content}</td>`;
+        });
+        html += `</tr></tbody>`;
+        table.innerHTML = html;
+    }
+
+    // ================= 核心状态更新 =================
+    function updateDashboard() {
+        const now = new Date();
+        const currentDay = now.getDay(); 
+        const currentMins = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+
+        document.getElementById('clock').textContent = formatTime(now);
+        document.getElementById('date').textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+
+        const statusCardEl = document.getElementById('status-card');
+        const currentCourseEl = document.getElementById('current-course');
+        const currentTeacherEl = document.getElementById('current-teacher');
+        const currentTimeRangeEl = document.getElementById('current-time-range');
+        const progressBarEl = document.getElementById('progress-bar');
+        const progressTextEl = document.getElementById('progress-text');
+
+        if (currentDay === 0 || currentDay === 6) {
+            statusCardEl.className = 'card status-card after-school-mode';
+            currentCourseEl.textContent = '周末愉快！🎮';
+            currentTeacherEl.style.display = 'none';
+            currentTimeRangeEl.textContent = '今天不上学，尽情去玩吧~';
+            progressBarEl.style.width = '0%';
+            progressBarEl.className = 'progress-bar after-school-mode';
+            progressTextEl.textContent = '0%';
+            updatePickUpUI(null, currentDay);
+            return;
+        }
+
+        const timeline = getTodayTimeline(currentDay);
+        let activeSlot = null, isBeforeSchool = false, isAfterSchool = false;
+        
+        const firstStartMins = timeStrToMinutes(timeline[0].start);
+        const lastEndMins = timeStrToMinutes(timeline[timeline.length - 1].end);
+
+        if (currentMins < firstStartMins) isBeforeSchool = true;
+        else if (currentMins >= lastEndMins) isAfterSchool = true;
+        else {
+            for (const slot of timeline) {
+                if (currentMins >= timeStrToMinutes(slot.start) && currentMins < timeStrToMinutes(slot.end)) {
+                    activeSlot = slot; break;
+                }
+            }
+        }
+
+        if (isBeforeSchool) {
+            const firstSlot = timeline[0];
+            statusCardEl.className = 'card status-card break-mode';
+            currentCourseEl.textContent = '准备出发去学校 🎒'; 
+            currentTeacherEl.style.display = 'none';
+            currentTimeRangeEl.textContent = `第一节课 ${firstSlot.start} 开始，准备好了吗？`;
+            progressBarEl.style.width = '0%'; progressBarEl.className = 'progress-bar break-mode'; progressTextEl.textContent = '准备中';
+        } else if (isAfterSchool) {
+            statusCardEl.className = 'card status-card after-school-mode';
+            currentCourseEl.textContent = '任务通关，放学啦 🏆'; 
+            currentTeacherEl.style.display = 'none';
+            currentTimeRangeEl.textContent = '今天辛苦啦，早点回家休息吧！';
+            progressBarEl.style.width = '100%'; progressBarEl.className = 'progress-bar after-school-mode'; progressTextEl.textContent = '已放学';
+        } else if (activeSlot) {
+            const startMins = timeStrToMinutes(activeSlot.start);
+            const endMins = timeStrToMinutes(activeSlot.end);
+            const progressPercent = Math.min(100, Math.max(0, ((currentMins - startMins) / (endMins - startMins)) * 100));
+
+            let courseName = activeSlot.name, typeClass = '', barClass = '';
+            if (activeSlot.type === 'class') {
+                courseName = activeSlot.courseName;
+                const teacher = getTeacher(courseName);
+                if (teacher) { currentTeacherEl.textContent = teacher; currentTeacherEl.style.display = 'flex'; } else { currentTeacherEl.style.display = 'none'; }
+                statusCardEl.className = 'card status-card class-mode';
+                typeClass = ' class-mode'; barClass = ' class-mode';
+            } else if (activeSlot.type === 'break') {
+                courseName = activeSlot.name.includes('午餐') ? '午餐午休 🍔' : '课间休息 🏃';
+                currentTeacherEl.style.display = 'none'; statusCardEl.className = 'card status-card break-mode';
+                typeClass = ' break-mode'; barClass = ' break-mode';
+            } else if (activeSlot.type === 'after-school') {
+                courseName = activeSlot.name + ' 🏫'; currentTeacherEl.style.display = 'none'; statusCardEl.className = 'card status-card after-school-mode';
+                typeClass = ' after-school-mode'; barClass = ' after-school-mode';
+            }
+            currentCourseEl.textContent = courseName; 
+            currentTimeRangeEl.textContent = `${activeSlot.start} - ${activeSlot.end}`;
+            progressBarEl.style.width = `${progressPercent.toFixed(1)}%`; progressBarEl.className = 'progress-bar' + barClass;
+            progressTextEl.textContent = `${progressPercent.toFixed(0)}%`;
+        }
+
+        updatePickUpUI(timeline, currentDay);
+    }
+
+    // ================= 接送逻辑 =================
+    function updatePickUpUI(timeline, currentDay) {
+        const labelEl = document.getElementById('today-pickup-label');
+        const resultEl = document.getElementById('pick-up-result');
+        const advanceEl = document.getElementById('advance-minutes');
+        const advanceMins = parseInt(advanceEl.value) || 0;
+
+        if (!timeline || currentDay === 0 || currentDay === 6) {
+            labelEl.textContent = '周末无安排';
+            resultEl.textContent = '今天是周末，好好休息吧 🎮';
+            resultEl.className = 'pick-up-result done';
+            return;
+        }
+
+        let targetEndMins = 0, targetLabel = '';
+        if (currentDay === 1) { targetEndMins = timeStrToMinutes('16:10'); targetLabel = '课后服务一（象棋）'; } 
+        else if (currentDay >= 2 && currentDay <= 4) { targetEndMins = timeStrToMinutes('16:10'); targetLabel = '课后服务一'; } 
+        else if (currentDay === 5) { targetEndMins = timeStrToMinutes('15:00'); targetLabel = '课后服务一'; }
+
+        labelEl.textContent = `${targetLabel}（${String(Math.floor(targetEndMins/60)).padStart(2, '0')}:${String(targetEndMins%60).padStart(2, '0')}）`;
+
+        const now = new Date();
+        const currentMins = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+        const leaveMins = targetEndMins - advanceMins;
+        const timeToLeave = leaveMins - currentMins;
+
+        if (currentMins >= targetEndMins) {
+            resultEl.textContent = `✅ 已于 ${String(Math.floor(targetEndMins/60)).padStart(2, '0')}:${String(targetEndMins%60).padStart(2, '0')} 放学，请确认接到小勇士啦！`;
+            resultEl.className = 'pick-up-result done';
+        } else if (currentMins >= leaveMins) {
+            resultEl.textContent = `🚨 该出发去接小勇士啦！(${String(Math.floor(leaveMins/60)).padStart(2, '0')}:${String(leaveMins%60).padStart(2, '0')} 出发)`;
+            resultEl.className = 'pick-up-result urgent';
+        } else {
+            const minsToWait = Math.ceil(timeToLeave);
+            const hrs = Math.floor(minsToWait / 60);
+            const mins = minsToWait % 60;
+            let waitStr = hrs > 0 ? `${hrs}小时${mins}分钟` : `${mins}分钟`;
+            resultEl.textContent = `⏳ 距离出发还有 ${waitStr} (${String(Math.floor(leaveMins/60)).padStart(2, '0')}:${String(leaveMins%60).padStart(2, '0')} 出发)`;
+            resultEl.className = 'pick-up-result normal';
+        }
+    }
+
+    // ================= 初始化 =================
+    document.getElementById('advance-minutes').addEventListener('input', updateDashboard);
+    renderWeeklyTable();
+    updateDashboard();
+    setInterval(updateDashboard, 1000);
+</script>
+
+</body>
+</html>
